@@ -1,0 +1,468 @@
+(function(){
+
+  // ============================
+  // SIMPLE ALERT PASSWORD GATE
+  // ============================
+  const pw = prompt("Enter password:");
+  if (pw !== "32524") {
+    alert("Incorrect password.");
+    return;
+  }
+
+  // ============================
+  // ACTIVITUDE GUI STARTS HERE
+  // ============================
+
+  const fontLink = document.createElement("link");
+  fontLink.href = "https://fonts.googleapis.com/css2?family=Comfortaa&display=swap";
+  fontLink.rel = "stylesheet";
+  document.head.appendChild(fontLink);
+
+  const root = document.createElement("div");
+  root.id = "activitudeRoot";
+  Object.assign(root.style, {
+    position: "absolute",
+    top: "100px",
+    left: "100px",
+    width: "800px",
+    height: "500px",
+    display: "flex",
+    flexDirection: "column",
+    background: "#FFFFFF",
+    border: "2px solid #2ECC71",
+    borderRadius: "16px",
+    fontFamily: "'Comfortaa', sans-serif",
+    color: "#2ECC71",
+    zIndex: "99999",
+    transition: "height 0.3s ease"
+  });
+  document.body.appendChild(root);
+
+  const titleBar = document.createElement("div");
+  Object.assign(titleBar.style, {
+    background: "rgba(46,204,113,0.15)",
+    padding: "10px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    fontSize: "18px",
+    fontWeight: "bold",
+    borderTopLeftRadius: "16px",
+    borderTopRightRadius: "16px",
+    color: "#2ECC71"
+  });
+  root.appendChild(titleBar);
+
+  const titleText = document.createElement("div");
+  titleText.innerHTML = "Activitude v3<br><span style=\"font-size:12px; font-weight:normal;\">(drag to move)</span>";
+  titleBar.appendChild(titleText);
+
+  const controls = document.createElement("div");
+  controls.style.display = "flex";
+  controls.style.gap = "8px";
+
+  const minimizeBtn = document.createElement("button"); minimizeBtn.textContent = "–";
+  const fullscreenBtn = document.createElement("button"); fullscreenBtn.textContent = "⛶";
+  const closeBtn = document.createElement("button"); closeBtn.textContent = "×";
+  const homeBtn = document.createElement("button"); homeBtn.textContent = "⌂";
+
+  [minimizeBtn, fullscreenBtn, closeBtn, homeBtn].forEach(btn => {
+    Object.assign(btn.style, {
+      cursor: "pointer",
+      border: "none",
+      borderRadius: "6px",
+      padding: "4px 8px",
+      background: "#2ECC71",
+      color: "#FFFFFF",
+      transition: "background 0.2s ease"
+    });
+    btn.onmouseenter = () => btn.style.background = "#27AE60";
+    btn.onmouseleave = () => btn.style.background = "#2ECC71";
+  });
+
+  controls.appendChild(minimizeBtn);
+  controls.appendChild(fullscreenBtn);
+  controls.appendChild(closeBtn);
+  controls.appendChild(homeBtn);
+  titleBar.appendChild(controls);
+
+  const contentRow = document.createElement("div");
+  Object.assign(contentRow.style, {
+    flex: "1",
+    display: "flex",
+    flexDirection: "row",
+    transition: "opacity 0.3s ease"
+  });
+  root.appendChild(contentRow);
+
+  const display = document.createElement("div");
+  display.id = "activitudeDisplay";
+  Object.assign(display.style, {
+    flex: "1",
+    margin: "10px",
+    background: "rgba(46,204,113,0.06)",
+    borderRadius: "12px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center"
+  });
+  contentRow.appendChild(display);
+
+  const dock = document.createElement("div");
+  dock.id = "activitudeDock";
+  Object.assign(dock.style, {
+    width: "90%",
+    height: "50px",
+    background: "rgba(46,204,113,0.15)",
+    borderRadius: "12px",
+    margin: "10px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "10px"
+  });
+  display.appendChild(dock);
+
+  const notes = document.createElement("div");
+  notes.id = "activitudeNotes";
+  Object.assign(notes.style, {
+    width: "160px",
+    background: "rgba(46,204,113,0.1)",
+    borderRadius: "12px",
+    padding: "10px",
+    display: "flex",
+    flexDirection: "column",
+    color: "#2ECC71",
+    fontSize: "12px",
+    lineHeight: "1.4",
+    whiteSpace: "pre-line"
+  });
+  notes.textContent = "To use Snubtendo:\n- Click Start Learning\n- Put 'funni' for the password\n- Leave Student ID empty";
+  contentRow.appendChild(notes);
+
+  // ============================
+  // DRAG LOGIC
+  // ============================
+  let drag = false, dx = 0, dy = 0;
+  titleBar.addEventListener("mousedown", e => { drag = true; dx = e.offsetX; dy = e.offsetY; });
+  document.addEventListener("mousemove", e => {
+    if (drag) {
+      root.style.left = (e.pageX - dx) + "px";
+      root.style.top = (e.pageY - dy) + "px";
+    }
+  });
+  document.addEventListener("mouseup", () => drag = false);
+
+  // ============================
+  // MINIMIZE (C2: 45px)
+  // ============================
+  minimizeBtn.onclick = () => {
+    if (contentRow.style.display !== "none") {
+
+      contentRow.style.opacity = "0";
+      setTimeout(() => {
+        contentRow.style.display = "none";
+        root.style.height = "45px"; // C2 height
+
+        // tighten title bar
+        titleBar.style.padding = "6px 10px";
+        titleText.style.lineHeight = "1";
+        titleText.style.margin = "0";
+
+        // tighten buttons
+        [minimizeBtn, fullscreenBtn, closeBtn, homeBtn].forEach(btn => {
+          btn.style.padding = "2px 6px";
+        });
+
+        minimizeBtn.textContent = "+";
+      }, 250);
+
+    } else {
+
+      contentRow.style.display = "flex";
+      setTimeout(() => {
+        contentRow.style.opacity = "1";
+        root.style.height = "500px";
+
+        // restore spacing
+        titleBar.style.padding = "10px";
+        titleText.style.lineHeight = "";
+        titleText.style.margin = "";
+
+        [minimizeBtn, fullscreenBtn, closeBtn, homeBtn].forEach(btn => {
+          btn.style.padding = "4px 8px";
+        });
+
+        minimizeBtn.textContent = "–";
+      }, 50);
+    }
+  };
+
+  // ============================
+  // FULLSCREEN
+  // ============================
+  let full = false;
+  fullscreenBtn.onclick = () => {
+    if (!full) {
+      Object.assign(root.style, {
+        position: "fixed",
+        top: "0",
+        left: "0",
+        width: "100%",
+        height: "100%"
+      });
+      full = true;
+      fullscreenBtn.textContent = "🗗";
+    } else {
+      Object.assign(root.style, {
+        position: "absolute",
+        top: "100px",
+        left: "100px",
+        width: "800px",
+        height: "500px"
+      });
+      full = false;
+      fullscreenBtn.textContent = "⛶";
+    }
+  };
+
+  // ============================
+  // PERSISTENT TAB SYSTEM
+  // ============================
+  const tabCache = {};
+  let currentTab = null;
+
+  function styleDockButton(btn){
+    Object.assign(btn.style, {
+      padding: "6px 12px",
+      borderRadius: "10px",
+      border: "none",
+      cursor: "pointer",
+      background: "#2ECC71",
+      color: "#FFFFFF",
+      fontFamily: "'Comfortaa', sans-serif",
+      transition: "background 0.2s ease"
+    });
+    btn.onmouseenter = () => btn.style.background = "#27AE60";
+    btn.onmouseleave = () => btn.style.background = "#2ECC71";
+  }
+
+  function registerTab(name, fn){
+    const b = document.createElement("button");
+    b.textContent = name;
+    styleDockButton(b);
+
+    b.onclick = () => {
+
+      // hide current tab
+      if (currentTab && tabCache[currentTab]) {
+        tabCache[currentTab].style.display = "none";
+      }
+
+      // load if first time
+      if (!tabCache[name]) {
+        const moduleWindow = fn();
+        tabCache[name] = moduleWindow;
+        display.appendChild(moduleWindow);
+      }
+
+      // show tab
+      tabCache[name].style.display = "flex";
+      currentTab = name;
+    };
+
+    dock.appendChild(b);
+  }
+
+  // ============================
+  // HOME BUTTON CLEARS ACTIVE TAB ONLY
+  // ============================
+  homeBtn.onclick = () => {
+    if (currentTab && tabCache[currentTab]) {
+      tabCache[currentTab].style.display = "none";
+    }
+    currentTab = null;
+
+    display.innerHTML = "";
+    display.appendChild(dock);
+  };
+
+  // ============================
+  // MODULE: CLICKR
+  // ============================
+  function loadClickrGUI(){
+    const w = document.createElement("div");
+    Object.assign(w.style, {
+      flex: "1",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "100%",
+      height: "100%"
+    });
+
+    fetch("https://raw.githubusercontent.com/mixishere/The-Mix-Archive/main/clickr.js")
+      .then(r => r.text())
+      .then(c => eval(c))
+      .catch(err => {
+        const m = document.createElement("div");
+        m.textContent = "Failed to load Clickr: " + err;
+        m.style.color = "#E74C3C";
+        w.appendChild(m);
+      });
+
+    return w;
+  }
+
+  // ============================
+  // MODULE: SNUBTENDO
+  // ============================
+  function loadSnubtendoGUI(){
+    const w = document.createElement("div");
+    Object.assign(w.style, {
+      flex: "1",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "100%",
+      height: "100%"
+    });
+
+    const iframe = document.createElement("iframe");
+    iframe.src = "https://therealsnubby.com";
+    Object.assign(iframe.style, {
+      width: "100%",
+      height: "100%",
+      border: "none",
+      borderRadius: "12px"
+    });
+
+    w.appendChild(iframe);
+    return w;
+  }
+
+  // ============================
+  // MODULE: DISK
+  // ============================
+  function loadDiskGUI(){
+    const w = document.createElement("div");
+    Object.assign(w.style, {
+      flex: "1",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "100%",
+      height: "100%"
+    });
+
+    fetch("https://raw.githubusercontent.com/mixishere/The-Mix-Archive/main/disk.js")
+      .then(r => r.text())
+      .then(c => eval(c))
+      .catch(err => {
+        const m = document.createElement("div");
+        m.textContent = "Failed to load Disk: " + err;
+        m.style.color = "#E74C3C";
+        w.appendChild(m);
+      });
+
+    return w;
+  }
+
+  // ============================
+  // MODULE: CHAT
+  // ============================
+  function loadChatGUI(){
+    const w = document.createElement("div");
+    Object.assign(w.style, {
+      flex: "1",
+      display: "flex",
+      flexDirection: "column",
+      width: "100%",
+      height: "100%"
+    });
+
+    const iframe = document.createElement("iframe");
+    iframe.src = "https://tlk.io/activitude";
+    Object.assign(iframe.style, {
+      width: "100%",
+      height: "100%",
+      border: "none",
+      borderRadius: "12px"
+    });
+
+    w.appendChild(iframe);
+    return w;
+  }
+
+  // ============================
+  // MODULE: HVX
+  // ============================
+  function loadHVXGUI(){
+    const w = document.createElement("div");
+    Object.assign(w.style, {
+      flex: "1",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "100%",
+      height: "100%"
+    });
+
+    const iframe = document.createElement("iframe");
+    iframe.src = "https://hvxwlrlkbj.itafricagroup.com/";
+    Object.assign(iframe.style, {
+      width: "100%",
+      height: "100%",
+      border: "none",
+      borderRadius: "12px"
+    });
+
+    w.appendChild(iframe);
+    return w;
+  }
+
+  // ============================
+  // MODULE: SH52
+  // ============================
+  function loadSH52GUI(){
+    const w = document.createElement("div");
+    Object.assign(w.style, {
+      flex: "1",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "100%",
+      height: "100%"
+    });
+
+    const iframe = document.createElement("iframe");
+    iframe.src = "https://sh52.lotsoflearning.shop/";
+    Object.assign(iframe.style, {
+      width: "100%",
+      height: "100%",
+      border: "none",
+      borderRadius: "12px"
+    });
+
+    w.appendChild(iframe);
+    return w;
+  }
+
+  // ============================
+  // REGISTER ALL TABS
+  // ============================
+  registerTab("Clickr", loadClickrGUI);
+  registerTab("Snubtendo", loadSnubtendoGUI);
+  registerTab("Disk", loadDiskGUI);
+  registerTab("Chat", loadChatGUI);
+  registerTab("HVX", loadHVXGUI);
+  registerTab("SH52", loadSH52GUI);
+
+})(); // END OF ACTIVITUDE v3
+
