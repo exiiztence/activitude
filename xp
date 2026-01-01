@@ -1,0 +1,448 @@
+// Remove old window if it exists
+if (window.__xpWindow) __xpWindow.remove();
+
+// === CREATE XP-STYLE GUI ===
+const xp = document.createElement("div");
+window.__xpWindow = xp;
+xp.style.position = "fixed";
+xp.style.top = "80px";
+xp.style.left = "80px";
+xp.style.width = "340px";
+xp.style.height = "360px";
+xp.style.background = "#ece9d8";
+xp.style.border = "2px solid #a0a0a0";
+xp.style.boxShadow = "2px 2px 5px rgba(0,0,0,0.3)";
+xp.style.fontFamily = "Tahoma, sans-serif";
+xp.style.zIndex = "999999";
+xp.style.resize = "both";
+xp.style.overflow = "hidden";
+document.body.appendChild(xp);
+
+// === TITLE BAR ===
+const titleBar = document.createElement("div");
+titleBar.style.background = "#0a64ad";
+titleBar.style.color = "white";
+titleBar.style.padding = "4px 8px";
+titleBar.style.fontWeight = "bold";
+titleBar.style.cursor = "move";
+titleBar.style.display = "flex";
+titleBar.style.justifyContent = "space-between";
+titleBar.style.alignItems = "center";
+titleBar.innerHTML = `<span>untitled - Paint</span>`;
+xp.appendChild(titleBar);
+
+// === WINDOW BUTTONS ===
+const btns = document.createElement("div");
+btns.style.display = "flex";
+btns.style.gap = "4px";
+
+function makeBtn(symbol, bg) {
+  const b = document.createElement("div");
+  b.innerText = symbol;
+  b.style.width = "20px";
+  b.style.height = "16px";
+  b.style.background = bg;
+  b.style.color = "black";
+  b.style.textAlign = "center";
+  b.style.lineHeight = "16px";
+  b.style.border = "1px solid #000";
+  b.style.cursor = "pointer";
+  b.style.fontSize = "12px";
+  return b;
+}
+
+const minimizeBtn = makeBtn("–", "#dcdcdc");
+const maximizeBtn = makeBtn("□", "#dcdcdc");
+const closeBtn = makeBtn("X", "#ff5c5c");
+
+btns.appendChild(minimizeBtn);
+btns.appendChild(maximizeBtn);
+btns.appendChild(closeBtn);
+titleBar.appendChild(btns);
+
+// === DRAG LOGIC ===
+let drag = false, dx, dy;
+titleBar.onmousedown = e => {
+  if (![minimizeBtn, maximizeBtn, closeBtn].includes(e.target)) {
+    drag = true;
+    dx = e.clientX - xp.offsetLeft;
+    dy = e.clientY - xp.offsetTop;
+  }
+};
+document.onmousemove = e => {
+  if (drag) {
+    xp.style.left = (e.clientX - dx) + "px";
+    xp.style.top = (e.clientY - dy) + "px";
+  }
+};
+document.onmouseup = () => drag = false;
+
+// === MINIMIZE ===
+minimizeBtn.onclick = () => {
+  xp.style.display = "none";
+  setTimeout(() => {
+    if (confirm("Restore XP window?")) xp.style.display = "block";
+  }, 50);
+};
+
+// === MAXIMIZE ===
+let maximized = false;
+maximizeBtn.onclick = () => {
+  if (!maximized) {
+    xp.dataset.oldLeft = xp.style.left;
+    xp.dataset.oldTop = xp.style.top;
+    xp.dataset.oldWidth = xp.style.width;
+    xp.dataset.oldHeight = xp.style.height;
+
+    xp.style.left = "0px";
+    xp.style.top = "0px";
+    xp.style.width = "100vw";
+    xp.style.height = "100vh";
+  } else {
+    xp.style.left = xp.dataset.oldLeft;
+    xp.style.top = xp.dataset.oldTop;
+    xp.style.width = xp.dataset.oldWidth;
+    xp.style.height = xp.dataset.oldHeight;
+  }
+  maximized = !maximized;
+};
+
+// === CLOSE ===
+closeBtn.onclick = () => xp.remove();
+
+// === MENU BAR ===
+const menu = document.createElement("div");
+menu.innerText = "File  Edit  View  Image  Options  Help";
+menu.style.padding = "4px 8px";
+menu.style.fontSize = "12px";
+menu.style.borderBottom = "1px solid #a0a0a0";
+xp.appendChild(menu);
+
+// === COLOR PALETTE (TITLE BAR COLOR SWITCH) ===
+const palette = document.createElement("div");
+palette.style.display = "grid";
+palette.style.gridTemplateColumns = "repeat(8, 1fr)";
+palette.style.gap = "2px";
+palette.style.padding = "8px";
+
+const colors = ["#000","#800","#080","#008","#880","#088","#888","#fff"];
+
+colors.forEach(c => {
+  const swatch = document.createElement("div");
+  swatch.style.background = c;
+  swatch.style.height = "20px";
+  swatch.style.border = "1px solid #444";
+  swatch.style.cursor = "pointer";
+
+  swatch.onclick = () => {
+    titleBar.style.background = c;
+    titleBar.style.color = (["#000","#800","#008","#080"].includes(c)) ? "white" : "black";
+  };
+
+  palette.appendChild(swatch);
+});
+
+xp.appendChild(palette);
+
+// === ICON BAR (XP BITMAP-STYLE) ===
+const iconBar = document.createElement("div");
+iconBar.style.display = "flex";
+iconBar.style.gap = "6px";
+iconBar.style.padding = "4px 8px 6px 8px";
+iconBar.style.borderBottom = "1px solid #a0a0a0";
+xp.appendChild(iconBar);
+
+function makeBitmapIcon(type, titleText) {
+  const wrapper = document.createElement("div");
+  wrapper.style.width = "22px";
+  wrapper.style.height = "22px";
+  wrapper.style.background = "#dcdcdc";
+  wrapper.style.border = "1px solid #808080";
+  wrapper.style.display = "flex";
+  wrapper.style.alignItems = "center";
+  wrapper.style.justifyContent = "center";
+  wrapper.style.cursor = "pointer";
+  wrapper.style.userSelect = "none";
+  wrapper.title = titleText;
+
+  const icon = document.createElement("div");
+  icon.style.width = "16px";
+  icon.style.height = "16px";
+  icon.style.border = "1px solid #000";
+
+  if (type === "note") {
+    // Notepad: white with blue horizontal lines
+    icon.style.background = "repeating-linear-gradient( to bottom, #ffffff, #ffffff 2px, #b0c4de 2px, #b0c4de 3px )";
+  } else if (type === "calc") {
+    // Calculator: gray with small dark squares
+    icon.style.background = "#c0c0c0";
+    icon.style.display = "grid";
+    icon.style.gridTemplateColumns = "repeat(2, 1fr)";
+    icon.style.gridTemplateRows = "repeat(2, 1fr)";
+    icon.style.gap = "1px";
+    for (let i = 0; i < 4; i++) {
+      const cell = document.createElement("div");
+      cell.style.background = "#404040";
+      icon.appendChild(cell);
+    }
+  } else if (type === "paint") {
+    // Paint: white with colored diagonal "brush stroke"
+    icon.style.background = "#ffffff";
+    icon.style.position = "relative";
+    const stroke = document.createElement("div");
+    stroke.style.position = "absolute";
+    stroke.style.width = "18px";
+    stroke.style.height = "3px";
+    stroke.style.background = "linear-gradient(to right, red, yellow, green, blue)";
+    stroke.style.transform = "rotate(-25deg)";
+    stroke.style.top = "7px";
+    stroke.style.left = "-1px";
+    icon.appendChild(stroke);
+  }
+
+  wrapper.appendChild(icon);
+  return wrapper;
+}
+
+const noteIcon = makeBitmapIcon("note", "Notes");
+const calcIcon = makeBitmapIcon("calc", "Calculator");
+const drawIcon = makeBitmapIcon("paint", "Paint Canvas");
+
+iconBar.appendChild(noteIcon);
+iconBar.appendChild(calcIcon);
+iconBar.appendChild(drawIcon);
+
+// === CONTENT AREA ===
+const content = document.createElement("div");
+content.style.flex = "1";
+content.style.padding = "8px";
+content.style.height = "180px";
+content.style.overflow = "auto";
+xp.appendChild(content);
+
+// =========================
+// === NOTES MODE =========
+// =========================
+const notes = document.createElement("textarea");
+notes.style.width = "95%";
+notes.style.height = "170px";
+notes.style.fontSize = "12px";
+notes.style.fontFamily = "Tahoma, sans-serif";
+notes.style.color = "black";
+notes.style.background = "white";
+notes.style.border = "1px solid #a0a0a0";
+notes.value = localStorage.xpNotes || "";
+notes.oninput = () => localStorage.xpNotes = notes.value;
+
+// === CALCULATOR MODE (REAL LOGIC, FIXED LAYOUT) =====
+const calcWrap = document.createElement("div");
+calcWrap.style.display = "none";
+calcWrap.style.fontFamily = "Tahoma, sans-serif";
+calcWrap.style.height = "170px";
+calcWrap.style.overflow = "hidden";
+
+// Display
+const calcDisplay = document.createElement("input");
+calcDisplay.style.width = "95%";
+calcDisplay.style.height = "28px";
+calcDisplay.style.marginBottom = "6px";
+calcDisplay.style.fontSize = "16px";
+calcDisplay.style.textAlign = "right";
+calcDisplay.style.border = "1px solid #808080";
+calcDisplay.style.background = "white";
+calcDisplay.readOnly = true;
+calcWrap.appendChild(calcDisplay);
+
+// Grid container (FIXED)
+const calcGrid = document.createElement("div");
+calcGrid.style.display = "grid";
+calcGrid.style.gridTemplateColumns = "repeat(4, 1fr)";
+calcGrid.style.gridTemplateRows = "repeat(5, 1fr)";
+calcGrid.style.gap = "4px";
+calcGrid.style.height = "130px";
+calcGrid.style.marginTop = "4px";
+calcWrap.appendChild(calcGrid);
+
+// REAL calculator logic
+let calcState = {
+  display: "0",
+  accumulator: null,
+  operator: null,
+  waitingForNew: true
+};
+
+function updateDisplay() {
+  calcDisplay.value = calcState.display;
+}
+
+function inputDigit(d) {
+  if (calcState.waitingForNew) {
+    calcState.display = d === "." ? "0." : d;
+    calcState.waitingForNew = false;
+  } else {
+    if (d === "." && calcState.display.includes(".")) return;
+    calcState.display = calcState.display === "0" && d !== "." 
+      ? d 
+      : calcState.display + d;
+  }
+}
+
+function executeOperation(nextOp) {
+  const current = parseFloat(calcState.display);
+
+  if (calcState.accumulator === null) {
+    calcState.accumulator = current;
+  } else if (calcState.operator) {
+    const a = calcState.accumulator;
+    let result = a;
+
+    if (calcState.operator === "+") result = a + current;
+    if (calcState.operator === "-") result = a - current;
+    if (calcState.operator === "*") result = a * current;
+    if (calcState.operator === "/") result = current === 0 ? NaN : a / current;
+
+    calcState.accumulator = result;
+    calcState.display = isNaN(result) || !isFinite(result) ? "Error" : String(result);
+  }
+
+  calcState.operator = nextOp;
+  calcState.waitingForNew = true;
+}
+
+function clearAll() {
+  calcState = {
+    display: "0",
+    accumulator: null,
+    operator: null,
+    waitingForNew: true
+  };
+}
+
+// Buttons (FIXED VISIBILITY)
+const buttons = [
+  "7","8","9","/",
+  "4","5","6","*",
+  "1","2","3","-",
+  "0",".","CE","+",
+  "C","="
+];
+
+buttons.forEach(b => {
+  const btn = document.createElement("button");
+  btn.innerText = b;
+
+  // XP-style button look
+  btn.style.background = "#e0e0e0";
+  btn.style.border = "1px solid #808080";
+  btn.style.height = "26px";
+  btn.style.fontSize = "14px";
+  btn.style.cursor = "pointer";
+  btn.style.display = "flex";
+  btn.style.alignItems = "center";
+  btn.style.justifyContent = "center";
+
+  btn.onclick = () => {
+    if (!isNaN(b) || b === ".") {
+      inputDigit(b);
+    } else if (["/","*","-","+"].includes(b)) {
+      executeOperation(b);
+    } else if (b === "=") {
+      executeOperation(null);
+      calcState.operator = null;
+    } else if (b === "C") {
+      clearAll();
+    } else if (b === "CE") {
+      calcState.display = "0";
+      calcState.waitingForNew = true;
+    }
+    updateDisplay();
+  };
+
+  calcGrid.appendChild(btn);
+});
+
+// Initialize
+clearAll();
+updateDisplay();
+
+
+// =========================
+// === CANVAS MODE =========
+// =========================
+const canvasWrap = document.createElement("div");
+canvasWrap.style.display = "none";
+
+const canvas = document.createElement("canvas");
+canvas.width = 300;
+canvas.height = 170;
+canvas.style.border = "1px solid #808080";
+canvas.style.background = "white";
+canvasWrap.appendChild(canvas);
+
+const ctx = canvas.getContext("2d");
+ctx.lineWidth = 2;
+ctx.strokeStyle = "black";
+
+let drawing = false;
+
+canvas.onmousedown = e => {
+  drawing = true;
+  ctx.beginPath();
+  ctx.moveTo(e.offsetX, e.offsetY);
+};
+
+canvas.onmousemove = e => {
+  if (drawing) {
+    ctx.lineTo(e.offsetX, e.offsetY);
+    ctx.stroke();
+  }
+};
+
+canvas.onmouseup = () => drawing = false;
+canvas.onmouseleave = () => drawing = false;
+
+// =========================
+// === ADD MODES TO CONTENT
+// =========================
+content.appendChild(notes);
+content.appendChild(calcWrap);
+content.appendChild(canvasWrap);
+
+// =========================
+// === MODE SWITCHING =====
+// =========================
+function showNotes() {
+  notes.style.display = "block";
+  calcWrap.style.display = "none";
+  canvasWrap.style.display = "none";
+}
+
+function showCalc() {
+  notes.style.display = "none";
+  calcWrap.style.display = "block";
+  canvasWrap.style.display = "none";
+}
+
+function showCanvas() {
+  notes.style.display = "none";
+  calcWrap.style.display = "none";
+  canvasWrap.style.display = "block";
+}
+
+noteIcon.onclick = showNotes;
+calcIcon.onclick = showCalc;
+drawIcon.onclick = showCanvas;
+
+// start in Notes mode
+showNotes();
+
+// === STATUS BAR ===
+const status = document.createElement("div");
+status.innerHTML = `<b>Help:</b> Notepad, Calculator, and Paint modes. Palette changes title bar.`;
+status.style.fontSize = "11px";
+status.style.padding = "4px 8px";
+status.style.borderTop = "1px solid #a0a0a0";
+status.style.background = "#d4d0c8";
+status.style.color = "#000";
+xp.appendChild(status);
+
